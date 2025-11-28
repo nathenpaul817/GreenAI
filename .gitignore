@@ -1,2 +1,6 @@
 credentials.json
+logs/
+.vscode/
 .codecarbon.config
+__pycache__/
+venv/
