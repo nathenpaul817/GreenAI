@@ -1,6 +1,7 @@
 numpy
 pandas
 codecarbon
+eco2ai
 torch
 matplotlib
 scikit-learn 
@@ -9,3 +10,4 @@ jupyter
 ipython
 requests
 python-dotenv
+ucimlrepo
