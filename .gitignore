@@ -3,5 +3,4 @@ logs/
 .vscode/
 .codecarbon.config
 __pycache__/
-venv/
 .DS_Store
