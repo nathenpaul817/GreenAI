@@ -1,6 +1,7 @@
 import os
 import sys
 import io
+import csv
 import logging
 from codecarbon import OfflineEmissionsTracker
 from eco2ai import Tracker as EcoTracker
@@ -42,3 +43,39 @@ class UnifiedTracker:
 
     def stop(self):
         self.tracker.stop()
+    
+    def get_results(self):
+        """Get results based on the tracking tool used"""
+        results = {}
+        
+        if self.tool == "codecarbon":
+            # CodeCarbon returns results directly from tracker.stop()
+            try:
+                emissions = self.tracker.stop()
+                if emissions:
+                    results = {
+                        "emissions": emissions,
+                        "emissions_rate": getattr(self.tracker, 'emissions_rate', 'N/A'),
+                        "energy_consumed": getattr(self.tracker, 'energy_consumed', 'N/A')
+                    }
+            except Exception as e:
+                print(f"Error getting codecarbon results: {e}")
+                
+        elif self.tool == "eco2ai":
+            # Eco2AI logs to file; need to read the latest entry
+            try:
+                import csv
+                eco2ai_file = f"{self.output_dir}/eco2ai_log.csv"
+                if os.path.exists(eco2ai_file):
+                    with open(eco2ai_file, 'r') as f:
+                        reader = csv.DictReader(f)
+                        for row in reader:
+                            # Get the last row
+                            results = {
+                                "power_consumption_kwh": row.get('power_consumption(kWh)', 'N/A'),
+                                "co2_emissions_kg": row.get('CO2_emissions(kg)', 'N/A')
+                            }
+            except Exception as e:
+                print(f"Error getting eco2ai results: {e}")
+        
+        return results
