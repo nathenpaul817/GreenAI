@@ -11,7 +11,7 @@ import time
 # Use the UnifiedTracker defined above
 from tracker import UnifiedTracker 
 
-def run_classical_experiment(model_type, tool):
+def run_classical_experiment(model_type, tool, epochs):
    
     print("Loading UCI Adult dataset...")
     X, y = fetch_openml(name="adult", version=2, return_X_y=True, as_frame=True)
@@ -52,11 +52,15 @@ def run_classical_experiment(model_type, tool):
     # Energy Tracking 
     tracker = UnifiedTracker(experiment_name=f"Tier1_{model_type}", tool=tool)
     
-    print(f"Starting training for {model_type}...")
+    print(f"Starting training for {model_type} ({epochs} epochs)...")
     tracker.start()
     start_time = time.time()
     
-    model.fit(X_train, y_train)
+    for epoch in range(epochs):
+        model.fit(X_train, y_train)
+        if epoch % max(1, epochs // 10) == 0:
+            score = model.score(X_test, y_test)
+            print(f"Epoch {epoch + 1}/{epochs} | Test Score: {score:.4f}")
     
     end_time = time.time()
     tracker.stop()
@@ -67,6 +71,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", choices=["logreg", "forest"], required=True)
     parser.add_argument("--tool", choices=["codecarbon", "eco2ai"], default="codecarbon")
+    parser.add_argument("--epochs", type=int, default=10)
     args = parser.parse_args()
     
-    run_classical_experiment(args.model, args.tool)
+    run_classical_experiment(args.model, args.tool, args.epochs)

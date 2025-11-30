@@ -28,7 +28,7 @@ def train(args):
     use_amp = (args.precision == "fp16")
     scaler = GradScaler(enabled=use_amp) # Scaler handles gradient unscaling for FP16
     
-    # replace with DataLoader(CIFAR10 or WikiText)
+    # replace with DataLoader(ImageNet or WikiText)
     input_shape = (args.batch_size, 3, 224, 224) if args.model == "resnet18" else (args.batch_size, 128)
     dummy_input = torch.randn(input_shape).to(device)
     dummy_target = torch.randint(0, 10, (args.batch_size,)).to(device)
