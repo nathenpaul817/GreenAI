@@ -11,3 +11,4 @@ ipython
 requests
 python-dotenv
 ucimlrepo
+torchvision
