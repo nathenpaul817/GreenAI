@@ -8,6 +8,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch_xla.core.xla_model as xm
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, models
 from PIL import Image
@@ -60,18 +61,28 @@ class ImageDataset(Dataset):
             return dummy_image, label
 
 
+
 def get_device():
-    """Get the appropriate device (CUDA, MPS, or CPU)"""
+    """Get the appropriate device (TPU, CUDA, MPS, or CPU)"""
+    # Try TPU (torch_xla)
+    try:
+        device = xm.xla_device()
+        print("Using TPU via torch_xla")
+        return device
+    except ImportError:
+        pass
+    except Exception as e:
+        print(f"torch_xla found but failed to initialize TPU: {e}")
+    # Fallback to CUDA, MPS, or CPU
     if torch.cuda.is_available():
         device = torch.device('cuda')
         print("Using CUDA GPU")
-    elif torch.backends.mps.is_available():
+    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
         device = torch.device('mps')
         print("Using Metal Performance Shaders (MPS)")
     else:
         device = torch.device('cpu')
         print("Using CPU")
-    
     return device
 
 
@@ -87,9 +98,10 @@ def train_resnet18(tool, batch_size, epochs, precision, image_dir="./ILSVRC_trai
     print(f"Precision: {precision}")
     print(f"{'='*60}\n")
     
+
     # Get device
     device = get_device()
-    
+
     # Set precision
     dtype = torch.float16 if precision == "fp16" else torch.float32
     
@@ -129,6 +141,8 @@ def train_resnet18(tool, batch_size, epochs, precision, image_dir="./ILSVRC_trai
     num_features = model.fc.in_features
     model.fc = nn.Linear(num_features, 10)  # 10 classes for demo
     
+
+    # Move model to device and set dtype
     model = model.to(device)
     model = model.to(dtype)
     
@@ -151,55 +165,63 @@ def train_resnet18(tool, batch_size, epochs, precision, image_dir="./ILSVRC_trai
     
     total_batches = len(dataloader)
     
+
     try:
         for epoch in range(epochs):
             model.train()
             epoch_loss = 0.0
             correct = 0
             total = 0
-            
+
             for batch_idx, (images, labels) in enumerate(dataloader):
                 # Move to device with correct dtype
                 images = images.to(device).to(dtype)
                 labels = labels.to(device)
-                
+
                 # Forward pass
                 optimizer.zero_grad()
                 outputs = model(images)
                 loss = criterion(outputs, labels)
-                
+
                 # Backward pass
                 loss.backward()
                 optimizer.step()
-                
+
+                # For TPU: mark step
+                try:
+                    import torch_xla.core.xla_model as xm
+                    xm.mark_step()
+                except ImportError:
+                    pass
+
                 # Statistics
                 epoch_loss += loss.item()
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
-                
+
                 # Print progress
                 if (batch_idx + 1) % max(1, total_batches // 5) == 0:
                     print(f"Epoch [{epoch+1}/{epochs}] Batch [{batch_idx+1}/{total_batches}] "
                           f"Loss: {loss.item():.4f}")
-            
+
             # Epoch statistics
             avg_loss = epoch_loss / len(dataloader)
             accuracy = 100 * correct / total
-            
+
             print(f"Epoch [{epoch+1}/{epochs}] - Avg Loss: {avg_loss:.4f}, "
                   f"Accuracy: {accuracy:.2f}%\n")
-    
+
     except KeyboardInterrupt:
         print("\nTraining interrupted by user")
-    
+
     finally:
         end_time = time.time()
         tracker.stop()
         runtime = end_time - start_time
-        
+
         print(f"\nTraining completed in {runtime:.2f}s")
-        
+
         # Get results
         results = tracker.get_results()
         results['runtime_seconds'] = runtime
@@ -208,9 +230,9 @@ def train_resnet18(tool, batch_size, epochs, precision, image_dir="./ILSVRC_trai
         results['epochs'] = epochs
         results['batch_size'] = batch_size
         results['precision'] = precision
-        
+
         print(f"\nEXPERIMENT_RESULTS: {json.dumps(results)}")
-        
+
         return tracker, runtime
 
 
