@@ -1,0 +1,2 @@
+id,project_name,experiment_description,epoch,start_time,duration(s),power_consumption(kWh),CO2_emissions(kg),CPU_name,GPU_name,OS,region/country,cost
+9205a7ed-e4fc-4a97-af3c-724cc7b9648b,Tier_III_BERT_Granular_Local,training the <your model> model,N/A,2025-12-01 13:40:11,34.02793598175049,4.013560012222114e-06,1.6628981842638664e-06,"Apple M4 Pro/1 device(s), TDP:46.0", 0 device(s),MacOS,US/Texas,0

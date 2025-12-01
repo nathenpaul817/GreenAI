@@ -6,3 +6,5 @@ __pycache__/
 .DS_Store
 venv/
 ILSVRC_train/
+bert-wikitext_fine_tuned/
+emission_results/
