@@ -4,7 +4,7 @@ codecarbon
 eco2ai
 torch
 matplotlib
-scikit-learn 
+scikit-learn
 scipy
 jupyter
 ipython
@@ -12,4 +12,6 @@ requests
 python-dotenv
 ucimlrepo
 torchvision
-tensorflow
+transformers
+datasets
+accelerate
