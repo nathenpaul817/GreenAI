@@ -1,0 +1,2 @@
+id,project_name,experiment_description,epoch,start_time,duration(s),power_consumption(kWh),CO2_emissions(kg),CPU_name,GPU_name,OS,region/country,cost
+810982e0-0b31-4e1b-a2ba-ee526067da39,Tier_III_BERT_v5e_Granular,training the <your model> model,N/A,2025-12-01 20:20:31,30.154744625091553,9.716197751668899e-05,3.829318709294492e-05,"AMD EPYC 9B14/1 device(s), TDP:500.0", 0 device(s),Linux,NL/Groningen,0
